@@ -17,7 +17,8 @@ export default class CommentController {
     const userId = req.user.id;
     const { articleSlug } = req.params;
     const { body } = req.body;
-    const createdComment = await comment.create({ articleSlug, userId, body });
+    const response = await comment.create({ articleSlug, userId, body });
+    const createdComment = await comment.getSingle(response.id);
     return res.status(status.CREATED).json({
       message: 'Comment successfully created',
       comment: createdComment
@@ -35,7 +36,7 @@ export default class CommentController {
     const allComments = await comment.getAll({ articleSlug });
     return res
       .status(status.OK)
-      .json({ message: 'Comments fetched successfully', Comments: allComments });
+      .json({ message: 'Comments fetched successfully', comments: allComments });
   }
 
   /**
@@ -81,12 +82,8 @@ export default class CommentController {
     const userId = req.user.id;
     const { articleSlug, commentId } = req.params;
     const newComment = { articleSlug, commentId, userId };
-    const findComment = await comment.getSingle({ articleSlug, id: commentId, userId });
     const findAllEdit = await editcomment.getAll(newComment);
-    if (findAllEdit.length === 0) {
-      return res.status(status.OK).json({ message: 'All previous', Comments: findComment });
-    }
-    return res.status(status.OK).json({ message: 'All previous comments', Comments: findAllEdit });
+    return res.status(status.OK).json({ message: 'All previous comments', history: findAllEdit });
   }
 
   /**

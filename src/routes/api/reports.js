@@ -27,6 +27,15 @@ router.get(
   asyncHandler(ReportController.getAll)
 );
 router.get(
+  '/reports',
+  verifyToken,
+  checkPermissions({
+    route: 'articles',
+    action: 'read'
+  }),
+  asyncHandler(ReportController.getAll)
+);
+router.get(
   '/:articleSlug/report/:reportId',
   verifyToken,
   checkArticle,
@@ -36,7 +45,6 @@ router.get(
 router.delete(
   '/:articleSlug/report/:reportId',
   verifyToken,
-  checkArticle,
   checkReportExist,
   asyncHandler(ReportController.deleteSingle)
 );

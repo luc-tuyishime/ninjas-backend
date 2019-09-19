@@ -23,7 +23,7 @@ export default class ReportController {
     });
     res.status(status.CREATED).json({
       message: 'Report created successfully',
-      Report: newReport
+      report: newReport
     });
   }
 
@@ -34,10 +34,12 @@ export default class ReportController {
    * @returns {object} a response to the client
    */
   static async getAll(req, res) {
-    const findAllReport = await report.getAll({ articleSlug: req.params.articleSlug });
+    const findAllReports = await report.getAll(
+      req.params.articleSlug ? { articleSlug: req.params.articleSlug } : null
+    );
     return res.status(status.OK).json({
       message: 'fetched all reports successfully',
-      Reports: findAllReport
+      reports: findAllReports
     });
   }
 
@@ -53,7 +55,7 @@ export default class ReportController {
     const findSingle = await report.getSingle(newreport);
     return res
       .status(status.OK)
-      .json({ message: 'Report fetched Successfully', Report: findSingle });
+      .json({ message: 'Report fetched Successfully', report: findSingle });
   }
 
   /**
@@ -63,10 +65,10 @@ export default class ReportController {
    * @returns {object} a response to the client
    */
   static async deleteSingle(req, res) {
-    const { articleSlug, reportId } = req.params;
-    const deleteSingle = await report.remove({ articleSlug, id: reportId });
+    const { reportId } = req.params;
+    const deleteSingle = await report.remove({ id: reportId });
     return res
       .status(status.OK)
-      .json({ message: 'Report deleted Successfully', Report: deleteSingle });
+      .json({ message: 'Report deleted Successfully', report: deleteSingle, reportId });
   }
 }

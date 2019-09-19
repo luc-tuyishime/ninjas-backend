@@ -13,17 +13,19 @@ export default class ArticleController {
   static async saveArticle(req, res) {
     const { tagList } = req.body;
     const coverUrl = req.files && req.files[0] !== undefined && req.files[0].originalname
-      ? `${req.files[0].version}/${req.files[0].public_id}.${req.files[0].format}`
+      ? `v${req.files[0].version}/${req.files[0].public_id}.${req.files[0].format}`
       : null;
     const newArticle = await Article.create({
-      userId: req.user.id || 0,
+      userId: req.user.id,
       slug: helpers.generator.slug(req.body.title),
       title: req.body.title.trim(),
       description: req.body.description.trim(),
       body: req.body.body.trim(),
       coverUrl,
       tagList,
-      readTime: helpers.generator.readtime(req.body.body)
+      readTime: helpers.generator.readtime(req.body.body),
+      likes: 0,
+      dislikes: 0
     });
     return res.status(status.CREATED).send({
       article: newArticle
@@ -45,13 +47,12 @@ export default class ArticleController {
       tag
     });
     if (articles.length >= 1 && !!articles) {
-      res.status(status.OK).send({
+      return res.status(status.OK).send({
         articles,
-        articlesCount: articles.length
+        articlesCount: await helpers.articles.counter('published')
       });
-    } else {
-      res.status(status.NOT_FOUND).send({ message: 'No articles found' });
     }
+    return res.status(status.NOT_FOUND).send({ message: 'No articles found' });
   }
 
   /**
@@ -201,6 +202,8 @@ export default class ArticleController {
         errors: { [resourceAction]: `article not removed from ${resourceAction}s` }
       })
       : res.status(status.OK).json({
+        slug,
+        userId: req.user.id,
         message: `article successfully removed from ${resourceAction}s `
       });
   }

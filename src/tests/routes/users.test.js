@@ -150,7 +150,7 @@ describe('Users routes', () => {
     chai
       .request(app)
       .put(`/api/v1/users/${createdUserOne.id}`)
-      .send({ password: 'Abcd1234!!' })
+      .send({ password: 'Abcd1234!!', permissions: JSON.parse(createdUserOne.permissions) })
       .set('access-token', accessTokenAdmin)
       .end((err, res) => {
         expect(res.status).to.be.equal(status.OK);
@@ -175,7 +175,7 @@ describe('Users routes', () => {
     chai
       .request(app)
       .put(`/api/v1/users/${createdUserTwo.id}`)
-      .send({ role: 'admin', permissions: 'create' })
+      .send({ role: 'admin', permissions: {} })
       .set('access-token', accessTokenNormalUser)
       .end((err, res) => {
         expect(res.status).to.be.equal(status.UNAUTHORIZED);
@@ -293,6 +293,32 @@ describe('Users routes', () => {
       .set('access-token', accessTokenAdmin)
       .end((err, res) => {
         expect(res.status).to.be.equal(status.NOT_FOUND);
+        done();
+      });
+  });
+
+  it('return all users whose username include the provided characters', (done) => {
+    chai
+      .request(app)
+      .get(`/api/v1/users/username/${createdUserTwo.username}?limit=1&offset=0`)
+      .set('access-token', accessTokenAdmin)
+      .end((err, res) => {
+        res.body.should.be.an('object');
+        expect(res.body).to.include.keys('users');
+        expect(res.body.users.length).to.be.greaterThan(0);
+        res.status.should.be.equal(status.OK);
+        done();
+      });
+  });
+
+  it('should not return all users if no user with the provided username is found ', (done) => {
+    chai
+      .request(app)
+      .get('/api/v1/users/username/fake-username?limit=1&offset=0')
+      .set('access-token', accessTokenAdmin)
+      .end((err, res) => {
+        res.body.should.be.an('object');
+        res.status.should.be.equal(status.NOT_FOUND);
         done();
       });
   });

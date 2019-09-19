@@ -68,8 +68,31 @@ export default class UserController {
     const users = await User.getAllUser({}, offset, limit);
 
     return res.status(status.OK).json({
-      users: users.map(user => delete user.get().password && user)
+      users: users.map((user) => {
+        const { password, ...userInfo } = user.get();
+        return userInfo;
+      })
     });
+  }
+
+  /**
+   * @param  {object} req
+   * @param  {object} res
+   * @return {object} return all users in database
+   */
+  static async getAllByUsername(req, res) {
+    const { username } = req.params;
+    const { offset, limit } = req.query;
+    const users = await User.searchUsersByUsername(username, offset, limit);
+
+    return (
+      (users
+        && users.length
+        && res.status(status.OK).json({
+          users: users.map(user => delete user.get().password && user)
+        }))
+      || res.status(status.NOT_FOUND).json({ errors: { user: 'no user with this username found' } })
+    );
   }
 
   /**
@@ -127,7 +150,8 @@ export default class UserController {
         : res.status(status.SERVER_ERROR).json({ errors: 'oops, something went wrong' });
     }
     return res.status(status.CREATED).json({
-      message: `now you are following ${checkUser.username}`
+      message: `now you are following ${checkUser.username}`,
+      follow: { ...follow, followedUser: checkUser }
     });
   }
 
@@ -145,13 +169,13 @@ export default class UserController {
     const hasUnfollowed = Object.keys(checkUser).length
       ? await User.follow.remove({ userId: user.id, followed: checkUser.id })
       : null;
-
     if (hasUnfollowed && hasUnfollowed.errors) {
       return res.status(status.SERVER_ERROR).json({ errors: 'oops, something went wrong!!' });
     }
     return hasUnfollowed
       ? res.status(status.OK).json({
-        message: `you unfollowed ${username}`
+        message: `you unfollowed ${username}`,
+        followed: checkUser.id
       })
       : res
         .status(status.BAD_REQUEST)
